@@ -1,0 +1,28 @@
+name: On release
+on:
+  release:
+    types:
+      - published
+jobs:
+  on-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get context
+        uses: actions/github-script@v7
+        id: context
+        with:
+          script: |
+            return {
+              commit_sha: context.sha,
+              pr_number: context.issue.number ?? (
+                await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  commit_sha: context.sha,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                })
+              ).data[0].number,
+            }
+      - name: Print commit_sha
+        run: echo $( jq -r '.commit_sha' <<< '${{ steps.context.outputs.result }}' )
+      - name: Print pr_number
+        run: echo $( jq -r '.pr_number' <<< '${{ steps.context.outputs.result }}' )
